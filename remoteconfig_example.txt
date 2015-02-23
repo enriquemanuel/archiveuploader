@@ -1,0 +1,7 @@
+sftp=example.com
+port=22
+user=blackboard
+idpath=/usr/local/blackboard/content/vi/bb_bb60/plugins/archive-uploader/id_rsa
+destinationpath=archives
+localpath=/tmp/evalenzuela
+bwlimit=25000

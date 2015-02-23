@@ -2,123 +2,111 @@ Uploader
 =========
 Due to increasingly clients requesting to upload course archives, I decided to implement a new and improved script to fully automated and send the archives as needed.
 
-* You can store the variables of the options in a file and invoke the script with a file option.
-
 Help?
 ===========
 The script has a help option that you can invoke and learn how to use it as needed. this can be done with the -h option or with --help.
 
 To note that -d (–debug) or -l (--log-file) have not been implemented at this stage.
 
-    # ./script.py --help
-    usage: script.py [-h] [-d] [-l LOGFILE] [-V] {file} ...
+Generic Help
+    # python archive_uploader.py -h
+    usage: archive_uploader.py [-h] [-V] {local,remote} ...
+
     Upload Blackboard Logs to SFTP
+
     positional arguments:
-    {file}            Select which Option File or CLI in order to do it
-                        correctly
-    file                Define the File that we are reading the variables
-    cli                 Define the arguments in the same line of execution
+      {local,remote}  Select which Option File or CLI in order to do it correctly
+        local         Use this to move archives from $BBHOME/Content/ to the
+                      tempstore location
+        remote        Use this to move archives from tempstore to the SFTP
+                      location
+
     optional arguments:
-    -h, --help            show this help message and exit
-    -d, --debug           Enable debug output
-    -l LOGFILE, --log-file LOGFILE
-                        File to log to (default = stdout)
-    -V, --version         show program's version number and exit
+      -h, --help      show this help message and exit
+      -V, --version   show program's version number and exit
 
-If you require further help of a command, you can perform it as is:
+    
 
-    # ./script.py file --help
-    usage: script.py file [-h] -f FILE
+For Remote Help
+
+    # archive_uploader.py remote -h
+      usage: archive_uploader.py remote [-h] --configfile CONFIGFILE --courselist
+                                        COURSELIST
+
+      optional arguments:
+        -h, --help            show this help message and exit
+        --configfile CONFIGFILE
+                              Configuration File
+        --courselist COURSELIST
+                              List of courses in a txt file to move the courses
+
+
+For Local Help
+    # archive_uploader.py local -h
+    usage: archive_uploader.py local [-h] --destination DESTINATION --courselist
+                                     COURSELIST
+
     optional arguments:
       -h, --help            show this help message and exit
-      -f FILE, --file FILE  Source File
-
-or
-
-    # ./script.py cli --help
-    usage: script.py cli [-h] --sftp SFTP --user USER [--id ID] [--port PORT]
-                     [--path PATH] [--bbservices BBSERVICES] [--bbsql BBSQL]
-                     [--bbauth BBAUTH] [--bbsessions BBSESSIONS]
-                     [--bbemail BBEMAIL] [--tomcataccess TOMCATACCESS]
-                     [--tomcatstd TOMCATSTD]
-    optional arguments:
-    -h, --help            show this help message and exit
-    --sftp SFTP           SFTP server to connect to.
-    --user USER           User used to connect to SFTP.
-    --id ID               ID file to be used with path eg:
-                          /Users/userid/.ssh/server_rsa (default is
-                          ~/.ssh/id_rsa)
-    --port PORT           Port to connect to SFTP (default is 22)
-    --path PATH           Path to drop the logs (default is /)
-    --bbservices BBSERVICES
-                          To include or not the bb-services.log
-    --bbsql BBSQL         To include or not the bb-services.log
-    --bbauth BBAUTH       To include or not the bb-services.log
-    --bbsessions BBSESSIONS
-                          To include or not the bb-services.log
-    --bbemail BBEMAIL     To include or not the bb-services.log
-    --tomcataccess TOMCATACCESS
-                          To include or not the bb-services.log
-    --tomcatstd TOMCATSTD
-                          To include or not the bb-services.log
+      --destination DESTINATION
+                            Location to move the archives to.
+      --courselist COURSELIST
+                            List of courses in a txt file to move the courses
 
 The idea
 ============
-The idea behind this script is to automatically connect to the server (no password interaction), so it connects uploads the files and disconnect.
+The idea behind this script is to 
+1. If chosen the local option to find from a list of courses all the archives and move them to a temp location
+2. If chosen remote, to upload all the files (hopefully archives) from the location specified to the SFTP
+
 
 This is done via Public / Private keys which needs to be generated from the Blackboard side. 
-If you don't know how to perform this, please read any of the below articles:
+
+How to generate a Public an Private Key
+========================================
+1. First run `ssh-keygen -t rsa`
+2. Enter where you would like to save the private and public key. Usually I stored it in a centralized location
+3. You can enter the passphrase afterwards.
+4. Now you are going to copy the public key to the server. You need at this point to have the User, the Host and the Password. Perform the following command: ssh-copy-id -i /path/to/newly/created/key.pub user@host.com
+5. The password will be required, so you will enter it at this time
+6. You are done!
+
+More info on:
 * How to create Public and Private keys: https://help.github.com/articles/generating-ssh-keys
 * If they don't work, I would suggest you troubleshoot this: http://inderpreetsingh.com/2011/08/04/ssh-privatepublic-key-auth-not-working/
 
-How to execute it?
-=================
+How to execute it (Remote)?
+===========================
 After you have installed and configured the Public and Private keys, my recommendation are the following:
 
-1. Create a directory under $BBHOME/content/vi/<schema>/plugins directory. In my case I like to name it the same log_uploader
+1. Create a directory under $BBHOME/content/vi/<schema>/plugins directory. In my case I like to name it the same archive_uploader. 
 2. In the same directory, I copy the files from the tempstore and the keys that were just created.
-3. Create / Modify the vars.txt file or whatever you want to call it that it will contain the options for the execution.
+3. Create / Modify the remoteconfig.txt file for your specifications
+4. Create a list of courses
 
-After you have this set up, you can review the vars.txt file and make the require modifications to input the logs that the client wants as well as where the Public Key is located. If none is given, it will default to the systems default, the same applies for the port (22).
+How to execute it (Local)?
+===========================
+For local you don't need keys, since you are moving information from your own paths probably to mount folders
+You only need to specify the folders where you want them to be moved with the --destination option
 
 How does it work?
 =================
-* What I found that was needed, was to upload the log from "yesterday" since the logs are rotated at off hours depending on the server, so we are actually uploading files that were completed the day before. For that reason you can schedule the CRON at early hours or late hours depending on your needs. My recommendation is at late hours, that way you are not grabbing a file that was rotated or is in rotation process.
-* The Script will create a temporary location with all the logs that you requested that is under /tmp/uploader and gzip the logs accordingly.
-* After the uploading occurred, it will delete the files and the temporary location.
-* The Script will output to the screen. Output to the log has not been created yet, but is in process.
-* There is a batchfile that was created. This is for uploading purposes, and should not be touched nor modified.
+* This script uses RSYNC to move information around, since it helps to debug and connect correctly to the system.
+* At this time we are not using and don't need the option to have a database of the RSYNC so it might be an overkill for the tool that we are currently using, but found it was the easiest option to implement base on experience
+* We read and parse the course list file and depending on the selecton (local or remote) we navigate to the path and start moving files around. If chosen local, we go into the course on the list and then into the archive folder to then find if there is an A*.zip file. This is the format for the Archives.  We then move it accordingly.
+* For the remote, we actually are a bit different, since we actually want to move everything inside the folder. So we just point the local folder, this can contain any information inside, only archives or all the course information and then upload it to the desired path to the SFTP.
 
 Example of Use
 ===============
+    #local example
+    python /home/evalenzuela/archiveUploader.py local --destination /tmp/evalenzuela/ --courselist /home/evalenzuela/cursos.txt 
 
-At this time, this has been configured on University of XXXX, where you can see the cron with the following information:
-
-#LOG uploader  
-0 2 * * * /usr/local/blackboard/content/vi/bb_bb60/plugins/log_uploader/script.py file -f /usr/local/blackboard/content/vi/bb_bb60/plugins/log_uploader/vars.txt >> /usr/local/blackboard/content/vi/bb_bb60/plugins/log_uploader/uploader.log
+    # remote example
+    python /home/evalenzuela/archiveUploader.py remote --configfile /home/evalenzuela/remoteconfig.txt --courselist /home/evalenzuela/cursos.txt 
 
 Please look that it contains a full path for safety measures. Also it is run as root and it should be in the cron of root. This is because of permissions on the /tmp location.
 
-Logging
-==========
 
-Like I mentioned before, there is no logging implemented in the script, but it will  output to the screen and based on the >> to a log as you can see in the cron above.
-
-An example of the log is:
-
-    sftp> put /tmp/uploader/*
-    Uploading /tmp/uploader/app06-bb-access-log.2014-12-09.gz to /home/bbdata/app06-bb-access-log.2014-12-09.gz
-    Uploading /tmp/uploader/app06-bb-authentication-log.2014-12-09.gz to /home/bbdata/app06-bb-authentication-log.2014-12-09.gz
-    Uploading /tmp/uploader/app06-bb-email-log.2014-12-09.gz to /home/bbdata/app06-bb-email-log.2014-12-09.gz
-    Uploading /tmp/uploader/app06-bb-services-log.2014-12-09.gz to /home/bbdata/app06-bb-services-log.2014-12-09.gz
-    Uploading /tmp/uploader/app06-bb-session-log.2014-12-09.gz to /home/bbdata/app06-bb-session-log.2014-12-09.gz
-    Uploading /tmp/uploader/app06-bb-sqlerror-log.2014-12-09.gz to /home/bbdata/app06-bb-sqlerror-log.2014-12-09.gz
-    Uploading /tmp/uploader/app06-stdout-stderr-20141209.gz to /home/bbdata/app06-stdout-stderr-20141209.gz
-    sftp> quit
-    removing temp local files
-    ====================================================
-    process completed at 2014-12-10 11:14:24.730874 for apcprd-100501-9576-app06
-    ====================================================
 
 New features?
 ==============

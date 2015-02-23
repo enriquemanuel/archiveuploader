@@ -104,8 +104,7 @@ def uploadFiles(configdict,coursearray):
 ####################
 today = datetime.datetime.now()
 curDate2 = today.strftime("%Y-%m-%d")
-schema=os.listdir("/usr/local/blackboard/content/vi")[0]
-bbcontent="/usr/local/blackboard/content/vi/"+schema+"/courses/1/"
+
 hostname = socket.gethostname()
 appnum = hostname[-5:]
 
