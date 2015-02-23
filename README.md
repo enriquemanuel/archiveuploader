@@ -67,7 +67,7 @@ How to generate a Public an Private Key
 1. First run `ssh-keygen -t rsa`
 2. Enter where you would like to save the private and public key. Usually I stored it in a centralized location
 3. You can enter the passphrase afterwards.
-4. Now you are going to copy the public key to the server. You need at this point to have the User, the Host and the Password. Perform the following command: ssh-copy-id -i /path/to/newly/created/key.pub user@host.com
+4. Now you are going to copy the public key to the server. You need at this point to have the User, the Host and the Password. Perform the following command: `ssh-copy-id -i /path/to/newly/created/key.pub user@host.com`
 5. The password will be required, so you will enter it at this time
 6. You are done!
 
